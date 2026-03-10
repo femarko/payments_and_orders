@@ -1,0 +1,17 @@
+# Web framework
+fastapi
+uvicorn
+gunicorn
+
+# Database
+SQLAlchemy
+alembic
+psycopg2-binary
+greenlet
+
+# config
+python-dotenv
+
+# Background jobs / queues
+redis
+rq
