@@ -17,3 +17,9 @@ class PaymentStatus(str, Enum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     REFUNDED = "refunded"
+
+
+class Currency(str, Enum):
+    RUB = "RUB"
+    USD = "USD"
+    EUR = "EUR"
