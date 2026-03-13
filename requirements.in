@@ -15,3 +15,7 @@ python-dotenv
 # Background jobs / queues
 redis
 rq
+
+# tests
+pytest
+pytest-cov
