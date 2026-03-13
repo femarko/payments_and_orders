@@ -1,0 +1,10 @@
+[run]
+
+source = .
+
+omit =
+    tests/*
+    */__init__.py
+    */__main__.py
+    */setup.py
+    */migrations/*
