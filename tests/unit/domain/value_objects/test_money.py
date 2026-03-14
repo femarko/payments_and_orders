@@ -147,3 +147,20 @@ def test_arithmetics_and_ordering_with_non_money_returns_not_supported(operation
 def test_zero_returns_expected_result():
     result = Money.zero()
     assert result == Money(Decimal("0"), Currency.RUB)
+
+
+@pytest.mark.parametrize(
+        "amount, expected",
+        [
+            ("0", False),
+            ("42", True),
+            ("-42", True)
+        ]
+)
+def test_money_bool_behavior(amount, expected):
+    m = Money(Decimal(amount), Currency.RUB)
+    assert bool(m) is expected
+
+
+def test_zero_is_falsy():
+    assert not Money.zero()
