@@ -64,6 +64,9 @@ class Money:
         self._validate_currency(other)
         return self.amount < other.amount
 
+    def __bool__(self) -> bool:
+        return self.amount != 0
+
     @classmethod
     def zero(cls, currency: Currency = Currency.RUB) -> Self:
         return cls(Decimal("0"), currency)
