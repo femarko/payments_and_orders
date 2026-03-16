@@ -14,7 +14,7 @@ from payments.domain.value_objects import (
 
 
 @pytest.fixture
-def payment(request) -> Payment:
+def payment_fixt(request) -> Payment:
     payment = Payment.create(
         payment_type=request.param.get("payment_type", PaymentType.ACQUIRING),
         money=request.param.get("money", Money(Decimal("100"), Currency.RUB)),
@@ -25,7 +25,7 @@ def payment(request) -> Payment:
 
 
 @pytest.fixture
-def payment_params() -> dict[str, PaymentType | Money | OrderId]:
+def payment_params_fixt() -> dict[str, PaymentType | Money | OrderId]:
     return {
         "payment_type": PaymentType.ACQUIRING,
         "money": Money(100),

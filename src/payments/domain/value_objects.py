@@ -8,7 +8,10 @@ from uuid import (
 )
 
 from payments.domain.enums import Currency
-from payments.domain.errors import IncompatibleCurrencyError
+from payments.domain.errors import (
+    IncompatibleCurrencyError,
+    ErrorCode
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,7 +47,10 @@ class Money:
 
     def _validate_currency(self, other: Self) -> None:
         if self.currency != other.currency:
-            raise IncompatibleCurrencyError(self.currency.value, other.currency.value)
+            raise IncompatibleCurrencyError(
+                from_currency=self.currency.value,
+                to_currency=other.currency.value
+            )
 
     def __add__(self, other: Self) -> Self:
         if not isinstance(other, Money):

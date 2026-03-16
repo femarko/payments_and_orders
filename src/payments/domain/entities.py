@@ -17,7 +17,10 @@ from payments.domain.value_objects import (
     PaymentId,
     Money,
 )
-from payments.domain.errors import PaymentError
+from payments.domain.errors import (
+    PaymentError,
+    ErrorCode
+)
 
 
 
@@ -67,8 +70,9 @@ class Payment(BaseEntity):
     def deposit(self) -> None:
         if self._status != PaymentStatus.CREATED:
             raise PaymentError(
-                f"Deposit is forbidden, payment status: `{self.status}`"
-        )
+                code=ErrorCode.FORBIDDEN_OPERATION,
+                message=f"Deposit is forbidden, payment status: `{self.status}`"
+            )
         self._status = PaymentStatus.DEPOSITED
         self.updated_at = datetime.now(timezone.utc)
 
@@ -78,8 +82,17 @@ class Payment(BaseEntity):
                 self._status = PaymentStatus.REFUNDED
                 self.updated_at = datetime.now(timezone.utc)        
             case PaymentStatus.REFUNDED:
-                raise PaymentError("Payment is already refunded")
+                raise PaymentError(
+                    code=ErrorCode.FORBIDDEN_OPERATION,
+                    message="Payment is already refunded"
+                )
             case PaymentStatus.CREATED:
-                raise PaymentError("Payment is not deposited")
+                raise PaymentError(
+                    code=ErrorCode.FORBIDDEN_OPERATION,
+                    message="Payment is not deposited"
+                )
             case _:
-                raise PaymentError(f"Invalid payment status: `{self._status}`")
+                raise PaymentError(
+                    code=ErrorCode.FORBIDDEN_OPERATION,
+                    message=f"Invalid payment status: `{self._status}`"
+                )

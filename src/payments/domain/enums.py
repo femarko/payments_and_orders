@@ -1,25 +1,25 @@
-from enum import Enum
+from enum import StrEnum
 
 
 
-class PaymentType(str, Enum):
+class PaymentType(StrEnum):
     CASH = "cash"
     ACQUIRING = "acquiring"
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(StrEnum):
     UNPAID = "unpaid"
     PAID = "paid"
     PARTIALLY_PAID = "partially_paid"
 
 
-class PaymentStatus(str, Enum):
+class PaymentStatus(StrEnum):
     CREATED = "created"
     DEPOSITED = "deposited"
     REFUNDED = "refunded"
 
 
-class Currency(str, Enum):
+class Currency(StrEnum):
     RUB = "RUB"
     USD = "USD"
     EUR = "EUR"
