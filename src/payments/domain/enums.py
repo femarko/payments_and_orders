@@ -1,4 +1,5 @@
 from enum import Enum
+from http.client import CREATED
 
 
 class PaymentType(str, Enum):
@@ -14,8 +15,7 @@ class OrderStatus(str, Enum):
 
 class PaymentStatus(str, Enum):
     CREATED = "created"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
+    DEPOSITED = "deposited"
     REFUNDED = "refunded"
 
 
