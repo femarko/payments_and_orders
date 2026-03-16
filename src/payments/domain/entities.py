@@ -11,6 +11,7 @@ from typing import (
 from payments.domain.enums import (
     PaymentStatus,
     PaymentType,
+    OrderStatus,
 )
 from payments.domain.value_objects import (
     OrderId,
@@ -83,3 +84,46 @@ class Payment(BaseEntity):
                 raise PaymentError("Payment is not deposited")
             case _:
                 raise PaymentError(f"Invalid payment status: `{self._status}`")
+
+
+@dataclass
+class Order(BaseEntity):
+    id: OrderId
+    total_amount: Money
+    payments: list[Payment]
+    _status: OrderStatus = OrderStatus.UNPAID
+    
+    @property
+    def paid_amount(self) -> Money:
+        return sum(
+            (
+                p.money for p in self.payments
+                if p.status == PaymentStatus.DEPOSITED
+            ),
+            Money.zero(self.total_amount.currency)
+        )
+    
+    @property
+    def unpaid_amount(self) -> Money:
+        return self.total_amount - self.paid_amount
+
+    @property
+    def status(self) -> OrderStatus:
+        return self._status
+
+    def update_status(self):
+        if not self.unpaid_amount:
+            self._status = OrderStatus.PAID
+            return
+        if self.paid_amount:
+            self._status = OrderStatus.PARTIALLY_PAID
+            return
+        self._status = OrderStatus.UNPAID
+
+    def _validate_payment(self, payment: Payment) -> None:
+        if self.status == OrderStatus.PAID:
+            raise PaymentError("Order is already paid")
+        if payment.money > self.unpaid_amount:
+            raise PaymentError(
+                f"Amount {payment.money.amount} exceeds unpaid amount"
+            )
