@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+
 class PaymentType(str, Enum):
     CASH = "cash"
     ACQUIRING = "acquiring"
@@ -14,8 +15,7 @@ class OrderStatus(str, Enum):
 
 class PaymentStatus(str, Enum):
     CREATED = "created"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
+    DEPOSITED = "deposited"
     REFUNDED = "refunded"
 
 
