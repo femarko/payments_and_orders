@@ -4,7 +4,6 @@ from datetime import (
     timezone
 )
 from typing import (
-    NoReturn,
     Optional,
     Self
 )
@@ -42,7 +41,7 @@ class Payment(BaseEntity):
         return self._status
 
     @status.setter
-    def status(self, value: PaymentStatus) -> NoReturn:
+    def status(self, value: PaymentStatus) -> None:
         raise AttributeError(
             "Direct status modification is forbidden. "
             "Use domain methods (deposit, refund)."
@@ -56,12 +55,13 @@ class Payment(BaseEntity):
         order_id: OrderId
     ) -> Self:
         payment = cls.__new__(cls)
+        now = datetime.now(timezone.utc)
         payment.id = PaymentId.new()
         payment.type = payment_type
         payment._status = PaymentStatus.CREATED
         payment.money = money
         payment.order_id = order_id
-        payment.created_at = datetime.now(timezone.utc)
+        payment.created_at = now
         return payment
 
     def deposit(self) -> None:
@@ -70,10 +70,16 @@ class Payment(BaseEntity):
                 f"Deposit is forbidden, payment status: `{self.status}`"
         )
         self._status = PaymentStatus.DEPOSITED
+        self.updated_at = datetime.now(timezone.utc)
 
     def refund(self) -> None:
-        if self._status == PaymentStatus.REFUNDED:
-            raise PaymentError("Payment is already refunded")
-        if self._status != PaymentStatus.DEPOSITED:
-            raise PaymentError("Payment is not deposited")
-        self._status = PaymentStatus.REFUNDED
+        match self._status:
+            case PaymentStatus.DEPOSITED:
+                self._status = PaymentStatus.REFUNDED
+                self.updated_at = datetime.now(timezone.utc)        
+            case PaymentStatus.REFUNDED:
+                raise PaymentError("Payment is already refunded")
+            case PaymentStatus.CREATED:
+                raise PaymentError("Payment is not deposited")
+            case _:
+                raise PaymentError(f"Invalid payment status: `{self._status}`")
