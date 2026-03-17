@@ -74,5 +74,5 @@ class Money:
         return self.amount != 0
 
     @classmethod
-    def zero(cls, currency: Currency = Currency.RUB) -> Self:
+    def zero(cls, currency: Currency) -> Self:
         return cls(Decimal("0"), currency)

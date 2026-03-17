@@ -26,8 +26,7 @@ def test_create_returns_payment_with_expected_attributes(payment_params_fixt):
     assert payment.status == PaymentStatus.CREATED
     assert payment.money == payment_params_fixt["money"]
     assert payment.money.currency == payment_params_fixt["money"].currency
-    assert payment.order_id == payment_params_fixt["order_id"]
-    assert isinstance(payment.order_id, OrderId)
+    assert payment.order_id is None
     assert isinstance(payment.created_at, datetime)
 
 
@@ -42,17 +41,34 @@ def test_set_status_externally_raises_attribute_error(payment_params_fixt):
         payment.status = PaymentStatus.REFUNDED
 
 
-def test_deposit_changes_payment_status_and_updated_at_value(payment_params_fixt):
+def test_deposit_sets_order_id_changes_status_and_updates_updated_at(payment_params_fixt, order_id_fixt):
     payment = Payment.create(**payment_params_fixt)
-    status_init = payment.status
-    updated_at_init = payment.updated_at
-    payment.deposit()
+    status_initial = payment.status
+    updated_at_initial = payment.updated_at
+    order_id_initial = payment.order_id
+    payment.deposit(order_id_fixt)
+    order_id_new = payment.order_id
     status_new = payment.status
     updated_at_new = payment.updated_at
-    assert status_init == PaymentStatus.CREATED
-    assert status_new == PaymentStatus.DEPOSITED
-    assert updated_at_init is None
-    assert isinstance(updated_at_new, datetime)
+    assert all(
+        (
+            status_initial == PaymentStatus.CREATED,
+            status_new == PaymentStatus.DEPOSITED
+        
+        )
+    )
+    assert all (
+        (
+            order_id_initial is None,
+            isinstance(order_id_new, OrderId)
+        )
+    ) 
+    assert all(
+        (
+            updated_at_initial is None,
+            isinstance(updated_at_new, datetime)
+        )
+    )
 
 
 @pytest.mark.parametrize(
@@ -64,17 +80,17 @@ def test_deposit_changes_payment_status_and_updated_at_value(payment_params_fixt
         indirect=True,
         ids=["deposited", "refunded"]
 )
-def test_deposit_with_wrong_payment_status_raises_domain_error(payment_fixt, request):
+def test_deposit_with_wrong_payment_status_raises_domain_error(payment_fixt, request, order_id_fixt):
     status_passed = request.node.callspec.params["payment_fixt"]["payment_status"]
     with pytest.raises(PaymentError, match=f"Deposit is forbidden, payment status: `{status_passed}`") as exc:
-        payment_fixt.deposit()
+        payment_fixt.deposit(order_id_fixt)
     err = exc.value
     assert err.code == ErrorCode.FORBIDDEN_OPERATION
 
 
-def test_refund_changes_payment_status_and_updated_at_value(payment_params_fixt):
+def test_refund_changes_payment_status_and_updated_at_value(payment_params_fixt, order_id_fixt):
     payment = Payment.create(**payment_params_fixt)
-    payment.deposit()
+    payment.deposit(order_id_fixt)
     status_init = payment.status
     updated_at_init = payment.updated_at
     payment.refund()

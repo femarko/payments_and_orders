@@ -145,7 +145,7 @@ def test_arithmetics_and_ordering_with_non_money_returns_not_supported(operation
 
 
 def test_zero_returns_expected_result():
-    result = Money.zero()
+    result = Money.zero(Currency.RUB)
     assert result == Money(Decimal("0"), Currency.RUB)
 
 
@@ -163,4 +163,4 @@ def test_money_bool_behavior(amount, expected):
 
 
 def test_zero_is_falsy():
-    assert not Money.zero()
+    assert not Money.zero(Currency.RUB)
