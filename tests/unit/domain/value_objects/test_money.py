@@ -73,13 +73,13 @@ def test_money_ordering_operations_different_currency_raises_error(operation):
         "other, expected",
         [
             (42, False),
-            ("forty_two", False),
+            ("42", False),
             (False, False),
             (42.12323453456, False),
         ]
 )
 def test_money_comparison_different_types_returns_false(other, expected):
-    money = Money(Decimal("100"), Currency.RUB)
+    money = Money(Decimal(other), Currency.RUB)
     assert (money == other) is expected
     assert (other == money) is expected
 
