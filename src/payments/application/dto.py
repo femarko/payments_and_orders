@@ -1,4 +1,8 @@
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    field_validator
+)
+from uuid import UUID
 
 from payments.domain.enums import (
     Currency,
@@ -8,10 +12,19 @@ from payments.domain.value_objects import OrderId
 
 
 class NewPaymentInput(BaseModel):
-    order_id: str
+    order_id: OrderId
     payment_type: PaymentType
     amount: str
     currency: Currency
+
+    @field_validator("order_id", mode="before")
+    @classmethod
+    def parse_order_id(cls, v) -> OrderId:
+        if isinstance(v, OrderId):
+            return v
+        if isinstance(v, str):
+            return OrderId(UUID(v))
+        raise TypeError(f"Unsupported type for order_id: {type(v)}")
 
 
 class MessageResponse(BaseModel):
