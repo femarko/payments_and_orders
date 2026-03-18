@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from decimal import Decimal
 from datetime import (
     datetime,
     timezone
@@ -11,6 +12,7 @@ from typing import (
 from payments.domain.enums import (
     PaymentStatus,
     PaymentType,
+    OrderStatus,
 )
 from payments.domain.value_objects import (
     OrderId,
@@ -18,6 +20,7 @@ from payments.domain.value_objects import (
     Money,
 )
 from payments.domain.errors import (
+    OrderError,
     PaymentError,
     ErrorCode
 )
@@ -96,3 +99,87 @@ class Payment:
                     code=ErrorCode.FORBIDDEN_OPERATION,
                     message=f"Invalid payment status: `{self._status}`"
                 )
+            
+
+@dataclass
+class Order:
+    id: OrderId
+    total_amount: Money
+    _status: OrderStatus = OrderStatus.UNPAID
+    updated_at: Optional[datetime] = None
+    
+    def __post_init__(self):
+        self._paid_amount = Money(Decimal("0"), self.total_amount.currency)
+
+    @property
+    def paid_amount(self) -> Money:
+        return self._paid_amount
+
+    @property
+    def unpaid_amount(self) -> Money:
+        return self.total_amount - self.paid_amount
+
+    @property
+    def status(self) -> OrderStatus:
+        return self._status
+
+    @status.setter
+    def status(self, value: OrderStatus) -> None:
+        raise AttributeError(
+            "Direct status modification is forbidden. "
+            "Use domain methods (accept_payment, refund_payment)."
+        )
+
+    def _update_status(self):
+        if self.unpaid_amount == self.total_amount:
+            self._status = OrderStatus.UNPAID
+        elif self.unpaid_amount > Money.zero(self.total_amount.currency):
+            self._status = OrderStatus.PARTIALLY_PAID
+        elif self.unpaid_amount == Money.zero(self.total_amount.currency):
+            self._status = OrderStatus.PAID
+        else:
+            raise OrderError(
+                code=ErrorCode.FORBIDDEN_OPERATION,
+                message="Paid amount exceeds total amount"
+            )
+
+    def _validate_currency(self, money):
+        if money.currency != self.total_amount.currency:
+            code = ErrorCode.FORBIDDEN_OPERATION
+            message = f"Payment currency `{money.currency}` differs "
+            f"from order currency `{self.total_amount.currency}`"
+            raise PaymentError(code, message)
+
+    def _validate_new_payment(self, money: Money) -> None:
+        if self.status == OrderStatus.PAID:
+            raise OrderError(
+                code=ErrorCode.FORBIDDEN_OPERATION,
+                message="Order is already paid"
+            )
+        self._validate_currency(money)      
+        if money > self.unpaid_amount:
+            raise OrderError(
+                code=ErrorCode.FORBIDDEN_OPERATION,
+                message=f"Amount {money.amount} exceeds unpaid amount"
+            )
+
+    def _validate_refund(self, money: Money):
+        self._validate_currency(money)
+        if money > self.paid_amount:
+            raise OrderError(
+                code=ErrorCode.FORBIDDEN_OPERATION,
+                message=f"Refund amount `{money.amount}` "
+                f"exceeds paid amount `{self.paid_amount}`"
+            )
+
+    def accept_payment(self, money: Money) -> None:
+        self._validate_new_payment(money)
+        self._paid_amount += money
+        self._update_status()
+        self.updated_at = datetime.now(timezone.utc)
+
+    def refund_payment(self, money: Money) -> None:
+        self._validate_refund(money)
+        self._paid_amount -= money
+        self._update_status()
+        self.updated_at = datetime.now(timezone.utc)
