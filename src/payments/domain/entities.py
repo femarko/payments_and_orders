@@ -24,12 +24,8 @@ from payments.domain.errors import (
 
 
 
-@dataclass
-class BaseEntity: ...
-
-
 @dataclass(init=False)
-class Payment(BaseEntity):
+class Payment:
     id: PaymentId
     type: PaymentType
     _status: PaymentStatus
@@ -49,7 +45,7 @@ class Payment(BaseEntity):
             "Direct status modification is forbidden. "
             "Use domain methods (deposit, refund)."
         )
-
+    
     @classmethod
     def create(
         cls,
@@ -73,6 +69,10 @@ class Payment(BaseEntity):
                 code=ErrorCode.FORBIDDEN_OPERATION,
                 message=f"Deposit is forbidden, payment status: `{self.status}`"
             )
+        if not self.order_id:
+            code = ErrorCode.INVALID_DATA
+            message = "Order ID is missing"
+            raise PaymentError(code, message)
         self._status = PaymentStatus.DEPOSITED
         self.updated_at = datetime.now(timezone.utc)
 
