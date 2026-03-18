@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-from src.payments.domain.enums import (
+from payments.domain.enums import (
     Currency,
     PaymentType
 )
-
+from payments.domain.value_objects import OrderId
 
 
 class NewPaymentInput(BaseModel):
