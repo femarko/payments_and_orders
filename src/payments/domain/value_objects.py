@@ -23,16 +23,6 @@ class BaseId:
     def new(cls) -> Self:
         return cls(uuid4())
     
-    @classmethod
-    def from_str(cls, str_id: str) -> Self:
-        try:
-            return cls(UUID(str_id))
-        except ValueError as e:
-            raise BaseIdError(
-                code=ErrorCode.INVALID_DATA,
-                message=f"Invalid UUID string: `{str_id}`"
-            ) from e
-    
     def __str__(self) -> str:
         return str(self.value)
     
