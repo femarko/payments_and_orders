@@ -21,7 +21,8 @@ from payments.domain.value_objects import (
 )
 from payments.domain.errors import (
     OrderError,
-    ErrorCode
+    ErrorCode,
+    PaymentError
 )
 from payments.domain.enums import (
     Currency,
@@ -129,6 +130,6 @@ def test_adding_extra_payment_raises_error(order_id):
     total_amount=Money(Decimal("400"), Currency.RUB)
     order = Order(id=order_id, total_amount=total_amount)
     order._paid_amount = total_amount
-    with pytest.raises(OrderError, match="Amount 450 exceeds unpaid amount") as e:
+    with pytest.raises(PaymentError, match="Order is already paid") as e:
         order.accept_payment(payment.money)
     assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
