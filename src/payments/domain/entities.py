@@ -111,6 +111,7 @@ class Order(BaseEntitiy):
     id: OrderId
     total_amount: Money
     _status: OrderStatus = OrderStatus.UNPAID
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     
     def __post_init__(self):
@@ -143,12 +144,17 @@ class Order(BaseEntitiy):
         elif self.unpaid_amount == Money.zero(self.total_amount.currency):
             self._status = OrderStatus.PAID
         else:
+            # после реализации соответствующего функционала здесь возможны вызовы:
+            #  - записи логов
+            #  - отправки уведомлений финансовой службе (фоновая задача)
             raise OrderError(
                 code=ErrorCode.FORBIDDEN_OPERATION,
-                message="Paid amount exceeds total amount"
+                message="Paiment rejected. Paid amount already "
+                f"exceeds total amount. Check payments history. "
+                f"Order ID: {self.id}."
             )
 
-    def _validate_currency(self, money):
+    def _validate_currency(self, money: Money):
         if money.currency != self.total_amount.currency:
             code = ErrorCode.FORBIDDEN_OPERATION
             message = f"Payment currency `{money.currency}` differs "
@@ -156,12 +162,13 @@ class Order(BaseEntitiy):
             raise PaymentError(code, message)
 
     def _validate_new_payment(self, money: Money) -> None:
+        self._validate_currency(money)      
+        self._update_status()
         if self.status == OrderStatus.PAID:
-            raise OrderError(
+            raise PaymentError(
                 code=ErrorCode.FORBIDDEN_OPERATION,
                 message="Order is already paid"
             )
-        self._validate_currency(money)      
         if money > self.unpaid_amount:
             raise OrderError(
                 code=ErrorCode.FORBIDDEN_OPERATION,
@@ -170,6 +177,7 @@ class Order(BaseEntitiy):
 
     def _validate_refund(self, money: Money):
         self._validate_currency(money)
+        self._update_status()
         if money > self.paid_amount:
             raise OrderError(
                 code=ErrorCode.FORBIDDEN_OPERATION,
