@@ -1,5 +1,8 @@
 from dataclasses import dataclass
-from typing import Self
+from typing import (
+    Self,
+    TypeVar
+)
 from decimal import Decimal
 from functools import total_ordering
 from uuid import (
@@ -15,6 +18,7 @@ from payments.domain.errors import (
 )
 
 
+
 @dataclass(frozen=True, slots=True)
 class BaseId:
     value: UUID
@@ -28,6 +32,9 @@ class BaseId:
     
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.value})"
+
+
+T_Domain_ID = TypeVar("T_Domain_ID", bound=BaseId, contravariant=True)
 
 
 class PaymentId(BaseId): ...
