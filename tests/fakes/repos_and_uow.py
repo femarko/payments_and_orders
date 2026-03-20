@@ -5,6 +5,8 @@ from typing import (
 )
 from datetime import datetime
 
+from payments.domain.entities import Payment
+
 
 
 class FakeBaseRepo:
@@ -16,7 +18,7 @@ class FakeBaseRepo:
     def add(self, instance) -> None:
         self.temp_added.append(instance)
 
-    def get_by_db_id(self, instance_id) -> Optional[Any]:
+    def get_by_id(self, instance_id) -> Optional[Any]:
         return next(
             (instance for instance in self.instances if instance.id == instance_id),
             None
@@ -41,14 +43,14 @@ class FakeBaseRepo:
 
 
 class FakePaymentsRepo(FakeBaseRepo):
-    def __init__(self, model_cls: object, payments: list) -> None:
-        self.model_cls = model_cls
+    def __init__(self, entity_cls: type[Payment], payments: list) -> None:
+        self.entity_cls = entity_cls
         super().__init__(instances=payments)
 
 
 class FakeOrdersRepo(FakeBaseRepo):
-    def __init__(self, model_cls: object, orders: list) -> None:
-        self.model_cls = model_cls
+    def __init__(self, entity_cls: object, orders: list) -> None:
+        self.entity_cls = entity_cls
         super().__init__(instances=orders)
 
 

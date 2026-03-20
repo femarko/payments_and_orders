@@ -33,7 +33,7 @@ class BaseUseCase(Generic[TResponse]):
 
     def fetch_from_db(self, uow: UoWProto, id: OrderId | PaymentId, repo_name: str):
         repo = getattr(uow, repo_name)
-        result = repo.get_by_db_id(id)
+        result = repo.get_by_id(id)
         if not result:
             raise NotFoundError(f"Object with {id=} is not found")
         return result
@@ -49,7 +49,7 @@ class PayOrder(BaseUseCase[TResponse]):
 
     def execute(self, payload: NewPaymentInput) -> TResponse:
         with self.uow() as uow:
-            payment: Payment = uow.payments.model_cls.create(
+            payment: Payment = uow.payments.entity_cls.create(
                 payment_type=payload.payment_type,
                 money=Money(
                     amount=Decimal(payload.amount),

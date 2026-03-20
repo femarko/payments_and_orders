@@ -33,8 +33,8 @@ def test_pay_order_uc_execute_behaviour():
     total_order_amount = Money(Decimal("100"), Currency.RUB)
     payment_amount = Money(Decimal("50"), Currency.RUB)
     order_to_pay = Order(id=order_id, total_amount=total_order_amount)
-    fake_payments_repo = FakePaymentsRepo(model_cls=Payment, payments=[])
-    fake_orders_repo = FakeOrdersRepo(model_cls=Order, orders=[order_to_pay])
+    fake_payments_repo = FakePaymentsRepo(entity_cls=Payment, payments=[])
+    fake_orders_repo = FakeOrdersRepo(entity_cls=Order, orders=[order_to_pay])
     fake_uow = lambda: FakeUnitOfWork(fake_payments_repo, fake_orders_repo)
     pay_order_uc = PayOrder(uow=fake_uow, response=MessageResponse)
     payload = NewPaymentInput(
@@ -63,8 +63,8 @@ def test_refund_payment_uc_execute_behaviour():
         order_id
     )
     payment._status = PaymentStatus.DEPOSITED
-    fake_payments_repo = FakePaymentsRepo(model_cls=Payment, payments=[payment])
-    fake_orders_repo = FakeOrdersRepo(model_cls=Order, orders=[order])
+    fake_payments_repo = FakePaymentsRepo(entity_cls=Payment, payments=[payment])
+    fake_orders_repo = FakeOrdersRepo(entity_cls=Order, orders=[order])
     fake_uow = lambda: FakeUnitOfWork(fake_payments_repo, fake_orders_repo)
     refund_payment_uc = RefundPayment(uow=fake_uow, response=MessageResponse)
     order_status_init = order.status

@@ -6,7 +6,8 @@ from datetime import (
 )
 from typing import (
     Optional,
-    Self
+    Self,
+    TypeVar
 )
 
 from payments.domain.enums import (
@@ -27,8 +28,12 @@ from payments.domain.errors import (
 
 
 
+class BaseEntitiy: ...
+T_Domain_Entity = TypeVar("T_Domain_Entity", bound=BaseEntitiy)
+
+
 @dataclass(init=False)
-class Payment:
+class Payment(BaseEntitiy):
     id: PaymentId
     type: PaymentType
     _status: PaymentStatus
@@ -102,7 +107,7 @@ class Payment:
             
 
 @dataclass
-class Order:
+class Order(BaseEntitiy):
     id: OrderId
     total_amount: Money
     _status: OrderStatus = OrderStatus.UNPAID
