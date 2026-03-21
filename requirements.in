@@ -9,6 +9,9 @@ alembic
 psycopg2-binary
 greenlet
 
+# http requests
+requests
+
 # config
 python-dotenv
 
