@@ -15,8 +15,10 @@ class OrderStatus(StrEnum):
 
 class PaymentStatus(StrEnum):
     CREATED = "created"
-    DEPOSITED = "deposited"
-    REFUNDED = "refunded"
+    PENDING = "pending"
+    EXECUTED = "executed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
 
 class Currency(StrEnum):
