@@ -1,18 +1,22 @@
 import pytest
 from datetime import datetime
+from decimal import Decimal
 
-from payments.domain.entities import Payment
+from payments.domain.entities.payment import Payment
 from payments.domain.enums import (
     PaymentStatus,
     PaymentType,
+    Currency,
 )
 from payments.domain.value_objects import (
     OrderId,
     PaymentId,
+    Money,
 )
 from payments.domain.errors import (
-    PaymentError,
     ErrorCode,
+    PaymentError,
+    DomainAttributeError,
 )
 
 
@@ -38,70 +42,60 @@ def test_init_raises_type_error(payment_params_fixt):
 
 def test_set_status_externally_raises_attribute_error(payment_params_fixt):
     payment = Payment.create(**payment_params_fixt)
-    with pytest.raises(AttributeError):
-        payment.status = PaymentStatus.REFUNDED
+    with pytest.raises(DomainAttributeError) as e:
+        payment.status = PaymentStatus.EXECUTED
+    assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
+    assert e.value.message == (
+        f"Direct modification of this attribute is forbidden. "
+        f"Use domain methods instead. Domain methods: `update_bank_status`."
+    )
 
 
-def test_deposit_changes_payment_status_and_updated_at_value(payment_params_fixt):
+def test_set_is_accepted_flag_externally_raises_attribute_error(payment_params_fixt):
+    payment = Payment.create(**payment_params_fixt)
+    with pytest.raises(DomainAttributeError) as e:
+        payment.is_accepted = True
+    assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
+    assert e.value.message == (
+        f"Direct modification of this attribute is forbidden. "
+        f"Use domain methods instead. Domain methods: `mark_as_accepted`."
+    )
+
+
+def test_set_is_refunded_flag_externally_raises_attribute_error(payment_params_fixt):
+    payment = Payment.create(**payment_params_fixt)
+    with pytest.raises(DomainAttributeError) as e:
+        payment.is_refunded = True
+    assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
+    assert e.value.message == (
+        f"Direct modification of this attribute is forbidden. "
+        f"Use domain methods instead. Domain methods: `mark_as_refunded`."
+    )
+
+
+def test_update_bank_status_changes_payment_status_and_updated_at_value(payment_params_fixt):
     payment = Payment.create(**payment_params_fixt)
     status_init = payment.status
     updated_at_init = payment.updated_at
-    payment.deposit()
+    payment.update_bank_status(status=PaymentStatus.EXECUTED)
     status_new = payment.status
     updated_at_new = payment.updated_at
     assert status_init == PaymentStatus.CREATED
-    assert status_new == PaymentStatus.DEPOSITED
+    assert status_new == PaymentStatus.EXECUTED
     assert updated_at_init is None
     assert isinstance(updated_at_new, datetime)
 
 
-@pytest.mark.parametrize(
-        "payment_fixt",
-        [
-            {"payment_status": PaymentStatus.DEPOSITED},
-            {"payment_status": PaymentStatus.REFUNDED}
-        ],
-        indirect=True,
-        ids=["deposited", "refunded"]
-)
-def test_deposit_with_wrong_payment_status_raises_domain_error(payment_fixt, request):
-    status_passed = request.node.callspec.params["payment_fixt"]["payment_status"]
-    with pytest.raises(PaymentError, match=f"Deposit is forbidden, payment status: `{status_passed}`") as exc:
-        payment_fixt.deposit()
-    err = exc.value
-    assert err.code == ErrorCode.FORBIDDEN_OPERATION
-
-
-def test_refund_changes_payment_status_and_updated_at_value(payment_params_fixt):
-    payment = Payment.create(**payment_params_fixt)
-    payment.deposit()
-    status_init = payment.status
-    updated_at_init = payment.updated_at
-    payment.refund()
-    status_new = payment.status
-    updated_at_new = payment.updated_at
-    assert status_init == PaymentStatus.DEPOSITED
-    assert status_new == PaymentStatus.REFUNDED
-    assert all(
-        (
-            isinstance(updated_at_init, datetime),
-            isinstance(updated_at_new, datetime),
-            updated_at_init < updated_at_new
-        )
+def test_update_bank_status_of_non_bank_payment_raises_error(order_id):
+    payment = Payment.create(
+        PaymentType.CASH,
+        Money(Decimal("100"), Currency.RUB),
+        order_id
     )
+    payment.type = PaymentType.CASH
+    payment._status = PaymentStatus.EXECUTED
+    with pytest.raises(PaymentError) as e:
+        payment.update_bank_status(PaymentStatus.EXECUTED)
+    assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
+    assert e.value.message == f"Unacceptable payment type: `{payment.type}`"
 
-
-@pytest.mark.parametrize(
-        "payment_fixt",
-        [
-            {"payment_status": PaymentStatus.CREATED, "expected": "Payment is not deposited"},
-            {"payment_status": PaymentStatus.REFUNDED, "expected": "Payment is already refunded"},
-            {"payment_status": "Invalid", "expected": "Invalid payment status: `Invalid`"},
-        ],
-        indirect=True,
-        ids=["created", "refunded", "unexpected"]
-)
-def test_refund_with_wrong_payment_status_raises_domain_error(payment_fixt, request):
-    expected = request.node.callspec.params["payment_fixt"]["expected"]
-    with pytest.raises(PaymentError, match=expected):
-        payment_fixt.refund()
