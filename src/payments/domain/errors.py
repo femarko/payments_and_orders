@@ -54,5 +54,5 @@ class DomainAttributeError(DomainError):
         ) -> None:
         final_message = message
         if domain_methods:
-            final_message += f"Domain methods: {domain_methods}."
+            final_message += f" Domain methods: {domain_methods}."
         super().__init__(ErrorCode.FORBIDDEN_OPERATION, final_message)
