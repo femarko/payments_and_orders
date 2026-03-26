@@ -3,7 +3,10 @@ from typing import (
     Self,
     TypeVar
 )
-from decimal import Decimal
+from decimal import (
+    Decimal,
+    ROUND_HALF_UP,
+)
 from functools import total_ordering
 from uuid import (
     UUID,
@@ -43,6 +46,12 @@ class PaymentId(BaseId): ...
 class OrderId(BaseId): ...
 
 
+class MoneyConfig:
+    SCALE = 2
+    PRECISION = 18
+    QUANT = Decimal("1." + "0" * SCALE)
+
+
 @total_ordering
 @dataclass(frozen=True)
 class Money:
@@ -52,6 +61,11 @@ class Money:
     def __post_init__(self) -> None:
         if not isinstance(self.amount, Decimal):
             object.__setattr__(self, "amount", Decimal(self.amount))
+        quantiezed = self.amount.quantize(
+            MoneyConfig.QUANT,
+            rounding=ROUND_HALF_UP
+        )
+        object.__setattr__(self, "amount", quantiezed)
 
     def _validate_currency(self, other: Self) -> None:
         if self.currency != other.currency:
