@@ -1,13 +1,9 @@
 from typing import(
     Protocol,
-    TypeVar,
     Optional
 )
 
-from payments.domain.entities import (
-    BaseEntitiy,
-    T_Domain_Entity,
-)
+from payments.domain.entities import T_Domain_Entity
 from payments.domain.entities.order import Order
 from payments.domain.entities.payment import Payment
 from payments.domain.value_objects import(
