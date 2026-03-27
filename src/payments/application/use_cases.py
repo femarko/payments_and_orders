@@ -54,7 +54,7 @@ class BaseUseCase(Generic[TResponse]):
         ) :
         result = repo.get_by_id(id)
         if not result:
-            raise NotFoundError(f"Object with {id=} is not found")
+            raise NotFoundError(f"Object with id={str(id)} is not found")
         return result
 
     def _check_bank_status(self, payment: Payment) -> CheckBankStatusResult:
@@ -68,26 +68,11 @@ class BaseUseCase(Generic[TResponse]):
             message ="Failed to update payment external status"
             raise BankError(code, message)
         if not bank_result.status:
-            raise PaymentError(
+            raise BankError(
                 ErrorCode.EXTERNAL_API_ERROR,
                 "Failed to update payment external status"
             )
         return bank_result
-
-    def _create_payment(
-            self,
-            uow: UoWProto,
-            payload: PaymentParams
-        ) -> Payment:
-        payment = Payment.create(
-            payment_type=payload.payment_type,
-            money=Money(
-                amount=Decimal(payload.amount),
-                currency=payload.currency,
-            ),
-            order_id=payload.order_id
-        )
-        return payment
     
 
 class DepositPayment(BaseUseCase[MessageResponse]):
@@ -114,6 +99,10 @@ class RefundPayment(BaseUseCase[MessageResponse]):
     def execute(self, payment_id: PaymentId) -> MessageResponse:
         with self.uow() as uow:
             payment: Payment = self._fetch_from_db(uow.payments, payment_id)    
+            if payment.is_refunded:
+                return self.response(
+                    message=f"Already refunded at {payment.refunded_at}"
+                )
             if payment.type == PaymentType.ACQUIRING:
                 bank_result = self._check_bank_status(payment)
                 payment.update_bank_status(status=bank_result.status)
