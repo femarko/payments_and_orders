@@ -7,18 +7,14 @@ from payments.application.interfaces.uow_interface import UoWProto
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.order import Order
 
-from payments.domain.repos_interfaces import (
-    RepoProto,
-)
+from payments.domain.repos_interfaces import RepoProto
 from payments.domain.value_objects import (
     OrderId,
     PaymentId,
-    Money,
 )
 from payments.domain.errors import NotFoundError
 from payments.domain.enums import (
     PaymentType,
-    PaymentStatus,
 )
 from payments.application.dto import (
     TResponse,
