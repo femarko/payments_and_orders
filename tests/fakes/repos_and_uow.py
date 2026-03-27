@@ -5,7 +5,7 @@ from typing import (
 )
 from datetime import datetime
 
-from payments.domain.entities import Payment
+from payments.domain.entities.payment import Payment
 
 
 
