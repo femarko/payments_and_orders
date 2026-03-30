@@ -39,9 +39,9 @@ class SQLAlchPaymentModel(SQLAlchBaseModel):
     )
     created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True))
-    external_id = Column(String, index=True, nullable=True)
-    is_accepted = Column(Boolean, index=True)
-    is_refunded = Column(Boolean, index=True)
+    external_id = Column(String, index=True, nullable=True, unique=True)
+    is_accepted = Column(Boolean, index=True, nullable=False, default=False)
+    is_refunded = Column(Boolean, index=True, nullable=False, default=False)
     accepted_at = Column(DateTime(timezone=True))
     refunded_at = Column(DateTime(timezone=True))
     order = relationship("SQLAlchOrderModel", back_populates="payments")
@@ -55,10 +55,10 @@ class SQLAlchOrderModel(SQLAlchBaseModel):
         nullable=False
     )
     currency = Column(String, index=True, nullable=False)
-    created_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), nullable=False)
     updated_at = Column(DateTime(timezone=True))
     paid_amount = Column(
-        Numeric(precision=18, scale=2, asdecimal=True),
+        Numeric(MoneyConfig.PRECISION, MoneyConfig.SCALE, asdecimal=True),
         nullable=False
     )
     payments = relationship("SQLAlchPaymentModel", back_populates="order")

@@ -1,4 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import (
+    dataclass,
+    field,
+)
 from typing import Optional
 from datetime import (
     datetime,
@@ -43,7 +46,9 @@ class Order(BaseEntitiy):
     """
     id: OrderId
     total_amount: Money
-    created_at: Optional[datetime] = None
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     updated_at: Optional[datetime] = None
 
     def __post_init__(self):
