@@ -36,7 +36,7 @@ def payment_to_model(entity: Payment) -> SQLAlchPaymentModel:
 
 def payment_to_entity(orm_model: SQLAlchPaymentModel) -> Payment:
     return Payment.restore(
-        id=orm_model.id,
+        id=PaymentId(orm_model.id),
         type=orm_model.type,
         status=orm_model.status,
         money=Money(orm_model.amount, orm_model.currency),
@@ -58,7 +58,7 @@ def order_to_model(entity: Order) -> SQLAlchOrderModel:
         currency=entity.total_amount.currency,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
-        paid_amount=entity.paid_amount,
+        paid_amount=entity.paid_amount.amount,
     )
 
 

@@ -68,7 +68,7 @@ def test_payment_to_entity_converts_orm_model_to_domain_entity(params):
 
     entity = payment_to_entity(model)
 
-    assert entity.id == PaymentId(params["payment_id"]).value
+    assert entity.id == PaymentId(params["payment_id"])
     assert entity.type == PaymentType.CASH
     assert entity.status == PaymentStatus.CREATED 
     assert entity.money == Money(Decimal(100.42), Currency.USD)
@@ -160,4 +160,4 @@ def test_order_to_model_converts_domain_entity_to_orm_model(params):
     assert model.total_amount == Money(params["amount"], Currency.EUR).amount
     assert model.created_at == params["created_at"]
     assert model.updated_at == params["updated_at"]
-    assert model.paid_amount == Money.zero(Currency.EUR)
+    assert model.paid_amount == Money.zero(Currency.EUR).amount
