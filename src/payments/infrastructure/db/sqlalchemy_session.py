@@ -1,19 +1,33 @@
+from typing import TypeVar
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from payments.infrastructure.db.orm_models import SQLAlchBaseModel
-from payments.config import Settings
-
-
-
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{Settings.POSTGRES_USER}:"
-    f"{Settings.POSTGRES_PASSWORD}@{Settings.POSTGRES_HOST}:"
-    f"{Settings.DB_PORT}/{Settings.POSTGRES_DB}"
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import (
+    sessionmaker,
+    Session,
 )
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-start_session = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+
+from payments.infrastructure.db.interfaces import DBSettingsProto
+
+
+
+type SessionFactory = sessionmaker[Session]
+
+
+def build_db_url(settings: DBSettingsProto) -> str:
+    return (
+        f"postgresql://{settings.POSTGRES_USER}:"
+        f"{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:"
+        f"{settings.DB_PORT}/{settings.POSTGRES_DB}"
+    )
+
+
+def build_engine(db_url: str) -> Engine:
+    return create_engine(db_url)
+
+
+def session_factory(engine: Engine) -> SessionFactory:
+    return sessionmaker[Session](
+        autocommit=False,
+        autoflush=False,
+        bind=engine
+    )
