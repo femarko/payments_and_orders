@@ -59,3 +59,16 @@ def fake_bank_api(bank_id: str) -> dict[str, str] | dict[str, Any]:
 @pytest.fixture
 def order_id():
      return OrderId.new()
+
+
+class FakeSettings:
+    POSTGRES_USER = "postgres"
+    POSTGRES_PASSWORD = "postgres"
+    POSTGRES_HOST = "localhost"
+    DB_PORT = 5432
+    POSTGRES_DB = "test_payments"
+
+
+@pytest.fixture
+def fake_settings() -> type[FakeSettings]:
+    return FakeSettings
