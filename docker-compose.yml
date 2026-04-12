@@ -1,0 +1,17 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5430:5432"
+    env_file:
+      - .env.example
+
+  pg_admin:
+    image: dpage/pgadmin4:8
+    env_file:
+      - .env.example
+    ports:
+      - "5050:80"
+    mem_limit: 2g
+    cpus: 0.5

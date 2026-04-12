@@ -3,15 +3,27 @@ from pydantic import (
     field_validator
 )
 from uuid import UUID
+from typing import TypeVar
 
 from payments.domain.enums import (
     Currency,
     PaymentType
 )
-from payments.domain.value_objects import OrderId
+from payments.domain.value_objects import (
+    OrderId,
+    PaymentId,
+)
 
 
-class NewPaymentInput(BaseModel):
+
+class BaseUCResponse(BaseModel): ...
+
+
+TResponse = TypeVar("TResponse", bound=BaseUCResponse)
+
+
+class PaymentParams(BaseUCResponse):
+    id: PaymentId
     order_id: OrderId
     payment_type: PaymentType
     amount: str
@@ -27,5 +39,5 @@ class NewPaymentInput(BaseModel):
         raise TypeError(f"Unsupported type for order_id: {type(v)}")
 
 
-class MessageResponse(BaseModel):
+class MessageResponse(BaseUCResponse):
     message: str
