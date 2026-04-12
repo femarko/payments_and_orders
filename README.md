@@ -59,7 +59,6 @@ HTTP API слой будет добавлен позже.
 - PostgreSQL
 - Pytest
 - Alembic
-- pytest
 
 ---
 
