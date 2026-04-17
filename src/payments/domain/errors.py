@@ -42,7 +42,13 @@ class NotFoundError(DomainError):
         super().__init__(code=ErrorCode.NOT_FOUND, message=message)
 
 
-class BankError(DomainError): ...
+class BankError(DomainError):
+    def __init__(
+            self,
+            code: ErrorCode = ErrorCode.EXTERNAL_API_ERROR,
+            message: str = "Failed to update payment external status"
+        ) -> None:
+        super().__init__(code=code, message=message)
 
 
 class DomainAttributeError(DomainError):
