@@ -21,7 +21,7 @@ from payments.application.dto import (
     PaymentParams,
     MessageResponse
 )
-from payments.application.interfaces.acquiring_gateway_interface import (
+from payments.application.interfaces.bank_gateway_interface import (
     BankGatewayProto,
     CheckBankStatusResult,
 )
