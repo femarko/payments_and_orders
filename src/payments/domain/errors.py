@@ -8,6 +8,9 @@ class ErrorCode(StrEnum):
     INVALID_DATA = "invalid input data"
     FORBIDDEN_OPERATION = "forbidden operation"
     EXTERNAL_API_ERROR = "external_api_error"
+    EXTERNAL_API_UNAVAILABLE = "external_api_unavailable"
+    INVALID_RESPONSE = "invalid_response"
+
 
 
 class DomainError(Exception):
