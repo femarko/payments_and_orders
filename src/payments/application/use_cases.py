@@ -21,7 +21,7 @@ from payments.application.dto import (
     PaymentParams,
     MessageResponse
 )
-from payments.application.interfaces.acquiring_gateway_interface import (
+from payments.application.interfaces.bank_gateway_interface import (
     BankGatewayProto,
     CheckBankStatusResult,
 )
@@ -60,14 +60,9 @@ class BaseUseCase(Generic[TResponse]):
             raise PaymentError(code, message)
         bank_result = self.bank_gateway.check_payment(payment)
         if bank_result.error:
-            code = ErrorCode.EXTERNAL_API_ERROR
-            message ="Failed to update payment external status"
-            raise BankError(code, message)
+            raise BankError()
         if not bank_result.status:
-            raise BankError(
-                ErrorCode.EXTERNAL_API_ERROR,
-                "Failed to update payment external status"
-            )
+            raise BankError()
         return bank_result
     
 

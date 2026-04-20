@@ -34,8 +34,7 @@ from payments.domain.enums import (
     PaymentStatus,
     PaymentType
 )
-from payments.application.interfaces\
-.acquiring_gateway_interface import CheckBankStatusResult
+from payments.application.interfaces.bank_gateway_interface import CheckBankStatusResult
 from payments.domain.errors import (
     PaymentError,
     NotFoundError,
@@ -204,7 +203,7 @@ def test_check_bank_status_raises_error_with_non_bank_payment():
     assert e.value.message == f"Non-acquiring payment: {payment.type = }"
 
 
-def test_check_bank_status_raises_error_when_banK_returns_error():
+def test_check_bank_status_raises_error_when_bank_returns_error():
     fake_payments_repo = FakePaymentsRepo(entity_cls=Payment, payments=[])
     fake_orders_repo = FakeOrdersRepo(entity_cls=Order, orders=[])
     fake_uow = lambda: FakeUnitOfWork(fake_payments_repo, fake_orders_repo)
