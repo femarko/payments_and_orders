@@ -2,7 +2,10 @@ import pytest
 from random import randint
 from decimal import Decimal
 from typing import Any
+from sqlalchemy import text
 
+
+from payments.config import get_settings
 from payments.domain.entities.payment import Payment
 from payments.domain.enums import (
     PaymentType,
@@ -13,6 +16,7 @@ from payments.domain.value_objects import (
     OrderId,
     Money,
 )
+from payments.infrastructure.db.sqlalchemy_session import build_engine
 
 
 @pytest.fixture
@@ -61,14 +65,21 @@ def order_id():
      return OrderId.new()
 
 
-class FakeSettings:
-    POSTGRES_USER = "postgres"
-    POSTGRES_PASSWORD = "postgres"
-    POSTGRES_HOST = "localhost"
-    DB_PORT = 5432
-    POSTGRES_DB = "test_payments"
-
-
 @pytest.fixture
-def fake_settings() -> type[FakeSettings]:
-    return FakeSettings
+def fake_db_url() -> str:
+    return "postgresql+psycopg://user:pass@localhost:5432/db"
+
+
+@pytest.fixture()
+def clean_db():
+    yield
+    db_url = get_settings().db_url
+    with build_engine(db_url).begin() as conn:
+        conn.execute(
+            text("""
+                TRUNCATE TABLE
+                    orders,
+                    payments
+                RESTART IDENTITY CASCADE;
+            """)
+        )

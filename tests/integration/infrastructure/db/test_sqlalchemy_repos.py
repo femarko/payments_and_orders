@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from payments.config import get_settings
 from payments.domain.entities.payment import Payment
 from payments.domain.entities.order import Order
 from payments.domain.value_objects import (
@@ -23,17 +24,12 @@ from payments.infrastructure.db.mappers import (
 from payments.infrastructure.db.sqlalchemy_session import (
     session_factory,
     build_engine,
-    build_db_url,
 )
 
 
 
 def test_payment_and_order_repos_successfully_add_and_get_by_id():
-    from payments.env import init_env
-    init_env(use_load_dotenv=True, env_file=".env.example")
-    from payments.config import Settings
-
-    db_url = build_db_url(Settings)
+    db_url = get_settings().db_url
     engine = build_engine(db_url)
     start_session = session_factory(engine)
     session = start_session()
