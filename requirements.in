@@ -6,7 +6,7 @@ gunicorn
 # Database
 SQLAlchemy
 alembic
-psycopg2-binary
+psycopg[binary]
 greenlet
 
 # http requests
@@ -14,6 +14,7 @@ requests
 
 # config
 python-dotenv
+pydantic_settings
 
 # Background jobs / queues
 redis
