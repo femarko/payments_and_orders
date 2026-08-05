@@ -6,14 +6,17 @@ from sqlalchemy import pool
 
 from alembic import context
 
+
+from payments.config import get_settings
+
+
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
     "sqlalchemy.url",
-    f"postgresql://{os.getenv('POSTGRES_USER')}:"
-    f"{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:"
-    f"{os.getenv('DB_PORT')}/{os.getenv('POSTGRES_DB')}"
+    get_settings().db_url
 )
 
 # Interpret the config file for Python logging.

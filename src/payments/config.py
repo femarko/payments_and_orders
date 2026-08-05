@@ -1,23 +1,69 @@
 import os
+from pathlib import Path
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict
+)
+from pydantic import PostgresDsn
+from enum import StrEnum
+from functools import lru_cache
 
 
-def require(name: str) -> str:
-    value = os.getenv(name)
-    if not value:
-        raise ValueError(f"{name} is required")
-    return value
+
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
-class Settings:
+class Mode(StrEnum):
+    LOC = "loc"
+    PROD = "prod"
+    EXAMPLE = "example"
+
+
+def get_env_file(mode: Mode) -> Path:
+    match mode:
+        case Mode.PROD:
+            return BASE_DIR / ".env.prod"
+        case Mode.EXAMPLE:
+            return BASE_DIR / ".env.example"
+        case _:
+            return BASE_DIR / ".env.loc"
+
+
+class Settings(BaseSettings):
+
     # auth / tokens
-    BANK_API_KEY = require("BANK_API_KEY")
+    bank_api_key: str
 
     # db
-    POSTGRES_HOST = require("POSTGRES_HOST")
-    DB_PORT = int(require("DB_PORT"))
-    POSTGRES_USER = require("POSTGRES_USER")
-    POSTGRES_PASSWORD = require("POSTGRES_PASSWORD")
-    POSTGRES_DB = require("POSTGRES_DB")
+    postgres_host: str
+    db_port: int
+    postgres_user: str
+    postgres_password: str
+    postgres_db: str
 
     # app name
-    APP_NAME = "Payments & Orders"
+    app_name: str = "Payments & Orders"
+
+    model_config = SettingsConfigDict(
+        env_file = get_env_file(os.getenv("MODE", Mode.EXAMPLE)),
+        env_file_encoding = "utf-8",
+        extra = "ignore",
+    )
+
+    @property
+    def db_url(self) -> str:
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+psycopg",
+                username=self.postgres_user,
+                password=self.postgres_password,
+                host=self.postgres_host,
+                port=self.db_port,
+                path=self.postgres_db
+            )
+        )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
