@@ -6,19 +6,9 @@ from sqlalchemy.orm import (
     Session,
 )
 
-from payments.infrastructure.db.interfaces import DBSettingsProto
-
 
 
 type SessionFactory = sessionmaker[Session]
-
-
-def build_db_url(settings: DBSettingsProto) -> str:
-    return (
-        f"postgresql://{settings.POSTGRES_USER}:"
-        f"{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:"
-        f"{settings.DB_PORT}/{settings.POSTGRES_DB}"
-    )
 
 
 def build_engine(db_url: str) -> Engine:

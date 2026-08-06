@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from payments.config import get_settings
 from payments.domain.value_objects import (
     OrderId,
     Money,
@@ -14,16 +15,12 @@ from payments.infrastructure.db.sqlalchemy_uow import SqlAlchemyUnitOfWork
 from payments.infrastructure.db.sqlalchemy_session import (
     session_factory,
     build_engine,
-    build_db_url,
 )
 
 
 
-def test_sqlalchemy_uow_adds_and_commits() -> None:
-    from payments.env import init_env
-    init_env(use_load_dotenv=True, env_file=".env.example")
-    from payments.config import Settings
-    db_url = build_db_url(Settings)
+def test_sqlalchemy_uow_adds_and_commits(clean_db) -> None:
+    db_url = get_settings().db_url
     engine = build_engine(db_url)
     start_session = session_factory(engine)
     order_id = OrderId.new()
@@ -49,10 +46,7 @@ def test_sqlalchemy_uow_adds_and_commits() -> None:
 
 
 def test_uow_rolls_back_on_error() -> None:
-    from payments.env import init_env
-    init_env(use_load_dotenv=True, env_file=".env.example")
-    from payments.config import Settings
-    db_url = build_db_url(Settings)
+    db_url = get_settings().db_url
     engine = build_engine(db_url)
     start_session = session_factory(engine)
     order = Order(

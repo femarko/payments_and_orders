@@ -1,25 +1,18 @@
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
+
 from payments.infrastructure.db.sqlalchemy_session import (
-    build_db_url,
     build_engine,
     session_factory,
 )
 
 
 
-def test_build_db_url(fake_settings):
-    result = build_db_url(fake_settings)
-    expected = "postgresql://postgres:postgres@localhost:5432/test_payments"
-    assert result == expected
-
-
-def test_build_engine():
-    url = "postgresql://user:pass@localhost:5432/db"
-    result = build_engine(url)
+def test_build_engine(fake_db_url):
+    result = build_engine(fake_db_url)
 
     assert isinstance(result, Engine)
-    assert result.url.drivername == "postgresql"
+    assert result.url.drivername == "postgresql+psycopg"
     assert result.url.username == "user"
     assert result.url.password == "pass"
     assert result.url.host == "localhost"
@@ -27,8 +20,8 @@ def test_build_engine():
     assert result.url.database == "db"
 
 
-def test_session_factory(fake_settings):
-    engine = build_engine(build_db_url(fake_settings))
+def test_session_factory(fake_db_url):
+    engine = build_engine(fake_db_url)
     sess_factory = session_factory(engine)
     session = sess_factory()
     assert isinstance(sess_factory, sessionmaker)
@@ -39,7 +32,7 @@ def test_session_factory(fake_settings):
     assert session.bind is engine
 
 
-def test_full_wiring(fake_settings):
-    engine = build_engine(build_db_url(fake_settings))
+def test_full_wiring(fake_db_url):
+    engine = build_engine(fake_db_url)
     session = session_factory(engine)
     assert session.kw["bind"] is engine
