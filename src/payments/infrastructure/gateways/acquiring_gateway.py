@@ -2,6 +2,7 @@ import time
 from typing import Any
 import requests
 from requests.exceptions import RequestException
+from uuid import UUID
 
 from payments.domain.entities.payment import Payment
 from payments.domain.errors import (
@@ -16,19 +17,19 @@ class BankGateway:
     def __init__(
             self,
             api_key: str,
-            check_url: str
+            base_url: str
     ) -> None:
         self.api_key = api_key
-        self.check_url = check_url
+        self.base_url = base_url
         
-    def _post_with_retry(self, url: str, data: dict) -> dict[str, Any]:
+    def _get_with_retry(self, payment_id: UUID) -> dict[str, Any]:
         last_exception = None
+        url = self.base_url + "/" + str(payment_id) + "/status"
         for attempt in range(3):
             try:
-                response = requests.post(
-                    url,
+                response = requests.get(
+                    url=url,
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    json=data,
                     timeout=5
                 )
                 response.raise_for_status()
@@ -45,7 +46,7 @@ class BankGateway:
                 time.sleep(0.5 * (attempt + 1))
         raise BankError(
             code = ErrorCode.EXTERNAL_API_UNAVAILABLE,
-            message=f"Failed to make request to {url}"
+            message=f"Failed to make request to {payment_id}"
         ) from last_exception
     
     def _parse_response(self, bank_response: dict) -> CheckBankStatusResult:
@@ -62,8 +63,7 @@ class BankGateway:
         )
 
     def check_payment(self, payment: Payment) -> CheckBankStatusResult:
-        bank_response = self._post_with_retry(
-            url=self.check_url,
-            data={"id": payment.id.value}
+        bank_response = self._get_with_retry(
+            payment_id=payment.id.value,
         )
         return self._parse_response(bank_response)
