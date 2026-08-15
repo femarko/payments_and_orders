@@ -29,7 +29,11 @@ class BaseId:
     @classmethod
     def new(cls) -> Self:
         return cls(uuid4())
-    
+
+    @classmethod
+    def from_string(cls, value: str) -> Self:
+        return cls(UUID(value))
+
     def __str__(self) -> str:
         return str(self.value)
     

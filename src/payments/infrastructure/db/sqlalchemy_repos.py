@@ -40,8 +40,9 @@ class PaymentRepo:
         self.session.add(orm_model)
         self._models |= {orm_model.id: orm_model}
 
-    def get_by_id(self, entity_id: PaymentId) -> Optional[Payment]:
-        orm_model = self.session.get(SQLAlchPaymentModel, str(entity_id.value))
+    def get_by_id(self, payment_id: PaymentId | str) -> Optional[Payment]:
+        id_parsed: str = str(payment_id.value) if isinstance(payment_id, PaymentId) else payment_id
+        orm_model = self.session.get(SQLAlchPaymentModel, id_parsed)
         if not orm_model:
             return
         entity = self._to_entity(orm_model)
@@ -82,8 +83,9 @@ class OrderRepo:
         self.session.add(orm_model)
         self._models |= {orm_model.id: orm_model}
 
-    def get_by_id(self, entity_id: OrderId) -> Optional[Order]:
-        orm_model = self.session.get(SQLAlchOrderModel, str(entity_id.value))
+    def get_by_id(self, order_id: OrderId) -> Optional[Order]:
+        id_parsed: str = str(order_id.value) if isinstance(order_id, OrderId) else order_id
+        orm_model = self.session.get(SQLAlchOrderModel, id_parsed)
         if not orm_model:
             return
         entity = self._to_entity(orm_model)
