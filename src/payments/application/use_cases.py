@@ -79,6 +79,8 @@ class DepositPayment(BaseUseCase[MessageResponse]):
                 payment.update_bank_status(status=bank_result.status)
             order: Order = self._fetch_from_db(uow.orders, payload.order_id)
             order.accept_payment(payment)
+            uow.payments.update_model(payment, payment.id)
+            uow.orders.update_model(order, order.id)
             uow.commit()
             acceptance_time = payment.accepted_at
         return self.response(
@@ -100,5 +102,7 @@ class RefundPayment(BaseUseCase[MessageResponse]):
             order_id = payment.order_id
             order: Order = self._fetch_from_db(uow.orders, order_id)
             order.refund_payment(payment)
+            uow.payments.update_model(payment, payment.id)
+            uow.orders.update_model(order, order.id)
             uow.commit()
         return self.response(message="Success")
