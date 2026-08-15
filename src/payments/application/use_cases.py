@@ -46,7 +46,7 @@ class BaseUseCase(Generic[TResponse]):
     def _fetch_from_db(
             self,
             repo: RepoProto,
-            id: OrderId | PaymentId,
+            id: OrderId | PaymentId | str,
         ) :
         result = repo.get_by_id(id)
         if not result:
