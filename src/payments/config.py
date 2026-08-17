@@ -31,8 +31,9 @@ def get_env_file(mode: Mode) -> Path:
 
 class Settings(BaseSettings):
 
-    # auth / tokens
+    # bank_api
     bank_api_key: str
+    bank_api_base_url: str
 
     # db
     postgres_host: str

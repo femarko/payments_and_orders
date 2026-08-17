@@ -9,6 +9,8 @@ from payments.infrastructure.db.mappers import (
     order_to_model,
     payment_to_entity,
     payment_to_model,
+    update_order_model,
+    update_payment_model,
 )
 
 
@@ -22,12 +24,14 @@ class SqlAlchemyUnitOfWork:
         self.payments = PaymentRepo(
             session=self.session,
             to_model=payment_to_model,
-            to_entity=payment_to_entity
+            to_entity=payment_to_entity,
+            update_model=update_payment_model
         )
         self.orders = OrderRepo(
             session=self.session,
             to_model=order_to_model,
-            to_entity=order_to_entity
+            to_entity=order_to_entity,
+            update_model=update_order_model
         )
         return self
 
