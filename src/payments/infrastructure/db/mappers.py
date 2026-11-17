@@ -32,9 +32,6 @@ def payment_to_model(entity: Payment) -> SQLAlchPaymentModel:
         updated_at=entity.updated_at,
         external_id=entity.external_id,
         is_accepted=entity.is_accepted,
-        is_refunded=entity._is_refunded,
-        accepted_at=entity._accepted_at,
-        refunded_at=entity._refunded_at
     )
 
 
@@ -49,9 +46,6 @@ def payment_to_entity(orm_model: SQLAlchPaymentModel) -> Payment:
         updated_at=orm_model.updated_at,
         external_id=orm_model.external_id,
         is_accepted=orm_model.is_accepted,
-        is_refunded=orm_model.is_refunded,
-        accepted_at=orm_model.accepted_at,
-        refunded_at=orm_model.refunded_at
     )
 
 
@@ -65,9 +59,6 @@ def update_payment_model(entity: Payment, orm_model: SQLAlchPaymentModel) -> SQL
     orm_model.updated_at = entity.updated_at
     orm_model.external_id = entity.external_id
     orm_model.is_accepted = entity.is_accepted
-    orm_model.is_refunded = entity._is_refunded
-    orm_model.accepted_at = entity._accepted_at
-    orm_model.refunded_at = entity._refunded_at
     return orm_model
 
 
@@ -77,17 +68,17 @@ def order_to_model(entity: Order) -> SQLAlchOrderModel:
         total_amount=entity.total_amount.amount,
         currency=entity.total_amount.currency,
         created_at=entity.created_at,
-        updated_at=entity.updated_at,
         paid_amount=entity.paid_amount.amount,
     )
 
 
 def order_to_entity(orm_model: SQLAlchOrderModel) -> Order:
-    order = Order(
+    order = Order.restore(
         id=OrderId(orm_model.id),
         total_amount=Money(orm_model.total_amount, orm_model.currency),
+        paid_amount=Money(orm_model.paid_amount, orm_model.currency),
         created_at=orm_model.created_at,
-        updated_at=orm_model.updated_at,        
+        updated_at=orm_model.updated_at
     )
     order._paid_amount = Money(orm_model.paid_amount, orm_model.currency)
     return order

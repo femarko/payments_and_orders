@@ -5,7 +5,6 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 from sqlalchemy import (
-    Column,
     String,
     Numeric,
     DateTime,
@@ -53,11 +52,8 @@ class SQLAlchPaymentModel(SQLAlchBaseModel):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    external_id: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True, unique=True)
+    external_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, unique=True)
     is_accepted: Mapped[bool] = mapped_column(Boolean, index=True, nullable=False, default=False)
-    is_refunded: Mapped[bool] = mapped_column(Boolean, index=True, nullable=False, default=False)
-    accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    refunded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     order = relationship("SQLAlchOrderModel", back_populates="payments")
 
 

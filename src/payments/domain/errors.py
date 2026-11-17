@@ -65,3 +65,8 @@ class DomainAttributeError(DomainError):
         if domain_methods:
             final_message += f" Domain methods: {domain_methods}."
         super().__init__(ErrorCode.FORBIDDEN_OPERATION, final_message)
+
+
+class InvalidOperation(DomainError):
+    def __init__(self, message: str) -> None:
+        super().__init__(code=ErrorCode.FORBIDDEN_OPERATION, message=message)

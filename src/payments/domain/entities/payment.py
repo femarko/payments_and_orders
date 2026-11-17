@@ -1,18 +1,22 @@
-from payments.domain.entities import BaseEntitiy
-from payments.domain.enums import PaymentStatus, PaymentType
-from payments.domain.errors import DomainAttributeError, ErrorCode, PaymentError
-from payments.domain.value_objects import Money, OrderId, PaymentId
-
-
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import (
     Self,
     Optional,
+    Any,
 )
 
 
-@dataclass(init=False)
+from payments.domain.entities import BaseEntitiy
+from payments.domain.enums import (
+    PaymentStatus,
+    PaymentType
+)
+from payments.domain.errors import DomainAttributeError, ErrorCode, PaymentError
+from payments.domain.value_objects import Money, OrderId, PaymentId
+
+
+
 class Payment(BaseEntitiy):
     """
     Represents a payment in two contexts:
@@ -30,12 +34,9 @@ class Payment(BaseEntitiy):
     Deposit/refund operations are intentionally handled by Order
     (aggregate root) to maintain consistency.
 
+    Creation and restoration are handled via factory methods.
+    Invariants are enforced during creation.
 
-    Dataclass is used for field declaration and repr only. Creation and
-    restoration are handled via factory methods. Invariants are enforced
-    during creation.
-
-    `__post_init__` is not available due to instantiation via `__new__`.
     All initialization logic is handled in the factory method.
     """
     id: PaymentId
@@ -47,9 +48,6 @@ class Payment(BaseEntitiy):
     updated_at: Optional[datetime] = None
     external_id: Optional[str] = None
     _is_accepted: bool = False
-    _is_refunded: bool = False
-    _accepted_at: Optional[datetime] = None
-    _refunded_at: Optional[datetime] = None
 
     @property
     def status(self) -> PaymentStatus:
@@ -73,25 +71,6 @@ class Payment(BaseEntitiy):
     @is_accepted.setter
     def is_accepted(self, value: bool) -> None:
         raise DomainAttributeError(domain_methods="`mark_as_accepted`")
-
-    @property
-    def is_refunded(self) -> bool:
-        """
-        Whether the payment has been refunded from the order (read-only).
-        """
-        return self._is_refunded
-
-    @is_refunded.setter
-    def is_refunded(self, value: bool) -> None:
-        raise DomainAttributeError(domain_methods="`mark_as_refunded`")
-
-    @property
-    def accepted_at(self) -> Optional[datetime]:
-        return self._accepted_at
-
-    @property
-    def refunded_at(self) -> Optional[datetime]:
-        return self._refunded_at
 
     @classmethod
     def create(
@@ -134,9 +113,6 @@ class Payment(BaseEntitiy):
         updated_at: Optional[datetime],
         external_id: Optional[str],
         is_accepted: bool,
-        is_refunded: bool,
-        accepted_at: Optional[datetime],
-        refunded_at: Optional[datetime],
     ) -> Self:
         """
         Recreates a Payment from persisted state.
@@ -152,9 +128,6 @@ class Payment(BaseEntitiy):
         payment.updated_at = updated_at
         payment.external_id = external_id
         payment._is_accepted = is_accepted
-        payment._is_refunded = is_refunded
-        payment._accepted_at = accepted_at
-        payment._refunded_at = refunded_at
         return payment
 
     def update_bank_status(self, status: PaymentStatus) -> None:
@@ -179,14 +152,24 @@ class Payment(BaseEntitiy):
         Marks payment as accepted and records acceptance timestamp.
         """
         self._is_accepted = True
-        self._accepted_at  = timestamp
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = timestamp
 
     def _mark_as_refunded(self, timestamp: datetime) -> None:
         """
         Marks payment as refunded and records refund timestamp.
         """
-        self._is_refunded = True
         self._is_accepted = False
-        self._refunded_at = timestamp
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = timestamp
+
+    def params(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "status": self.status,
+            "money": self.money,
+            "order_id": self.order_id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "external_id": self.external_id,
+            "is_accepted": self.is_accepted,
+        }
