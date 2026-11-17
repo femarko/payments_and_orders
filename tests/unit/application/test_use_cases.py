@@ -62,20 +62,16 @@ class FakeBankGateway:
 
 def test_deposit_payment_uc_behaviour():
     
-    order_id = OrderId.new()
     total_order_amount = Money(Decimal("100"), Currency.RUB)
-    order = Order(id=order_id, total_amount=total_order_amount)
+    order = Order(money=total_order_amount)
 
-    order_before = (order.status, isinstance(order.updated_at, NoneType))
+    order_before = order.params()
     
     fake_orders_repo = FakeOrdersRepo(entity_cls=Order, orders=[order])
     payment_amount = Money(Decimal("50"), Currency.RUB)
-    payment = Payment.create(PaymentType.ACQUIRING, payment_amount, order_id)
+    payment = Payment.create(PaymentType.ACQUIRING, payment_amount, order.id)
     
-    payment_before = (
-        payment._is_accepted,
-        isinstance(payment._accepted_at, NoneType)
-    )
+    payment_before = payment.params()
 
     fake_payments_repo = FakePaymentsRepo(Payment, [payment])
     fake_uow = lambda: FakeUnitOfWork(fake_payments_repo, fake_orders_repo)
@@ -91,7 +87,7 @@ def test_deposit_payment_uc_behaviour():
     )
     payload = PaymentParams(
         id=payment.id,
-        order_id=order_id,
+        order_id=order.id,
         payment_type=PaymentType.ACQUIRING,
         amount=str(payment_amount.amount),
         currency=Currency.RUB
@@ -99,32 +95,28 @@ def test_deposit_payment_uc_behaviour():
 
     uc_response = deposit_payment_uc.execute(payload)
     
-    order_after = (
-        order.status,
-        isinstance(order.updated_at, datetime)
-    )
-    payment_after = (
-        payment._is_accepted,
-        isinstance(payment._accepted_at, datetime)
-    )
+    order_after = order.params()
+    payment_after = payment.params() 
 
-    assert order_before == (OrderStatus.UNPAID, True)
-    assert order_after == (OrderStatus.PARTIALLY_PAID, True)
-    assert payment_before == (False, True)
-    assert payment_after == (True, True)
-    assert uc_response.message == f"Payment accepted at {payment.accepted_at}"
+    assert order_before["status"] == OrderStatus.UNPAID
+    assert isinstance(order_before["updated_at"], NoneType)
+    assert order_after["status"] == OrderStatus.PARTIALLY_PAID
+    assert isinstance(order_after["updated_at"], datetime)
+    assert payment_before["is_accepted"] == False
+    assert isinstance(payment_before["updated_at"], NoneType)          
+    assert payment_after["is_accepted"] == True
+    assert isinstance(payment_after["updated_at"], datetime)
+    assert uc_response.message == f"Payment accepted at {payment.updated_at}"
 
 
 def test_refund_payment_uc_behaviour():
-    order_id = OrderId.new()
     total_order_amount = Money(Decimal("100"), Currency.RUB)
-    order = Order(id=order_id, total_amount=total_order_amount)
+    order = Order(money=total_order_amount)
     order._paid_amount = total_order_amount
-    order._status = OrderStatus.PAID
     payment = Payment.create(
         PaymentType.ACQUIRING,
         Money(Decimal("50"), Currency.RUB),
-        order_id
+        order.id
     )
     payment._mark_as_accepted(datetime.now(timezone.utc))
     fake_payments_repo = FakePaymentsRepo(entity_cls=Payment, payments=[payment])
@@ -309,4 +301,4 @@ def test_early_return_when_payment_is_already_refunded():
     accepted_at = datetime.now(timezone.utc)
     payment._mark_as_refunded(accepted_at)
     uc_response = refund_payment_uc.execute(payment.id)
-    assert uc_response.message == f"Already refunded at {accepted_at}"
+    assert uc_response.message == f"Payment is not accepted and cannot be refunded."

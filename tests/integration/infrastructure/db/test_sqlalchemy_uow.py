@@ -23,13 +23,11 @@ def test_sqlalchemy_uow_adds_and_commits(clean_db) -> None:
     db_url = get_settings().db_url
     engine = build_engine(db_url)
     start_session = session_factory(engine)
-    order_id = OrderId.new()
     order = Order(
-        id=order_id,
-        total_amount=Money(Decimal("100"), Currency.RUB)
+        money=Money(Decimal("100"), Currency.RUB)
     )
     payment = Payment.create(
-        order_id=order_id,
+        order_id=order.id,
         payment_type=PaymentType.ACQUIRING,
         money=Money(Decimal("100"), Currency.RUB),
     )
@@ -39,10 +37,10 @@ def test_sqlalchemy_uow_adds_and_commits(clean_db) -> None:
         uow.payments.add(payment)
         uow.commit()
     with SqlAlchemyUnitOfWork(session_factory=start_session) as uow:
-        order_fetched = uow.orders.get_by_id(order_id)
+        order_fetched = uow.orders.get_by_id(order.id)
         payment_fetched = uow.payments.get_by_id(payment_id)
-    assert order_fetched == order
-    assert payment_fetched == payment
+    assert order_fetched.params() == order.params()
+    assert payment_fetched.params() == payment.params()
 
 
 def test_uow_rolls_back_on_error() -> None:
@@ -50,8 +48,7 @@ def test_uow_rolls_back_on_error() -> None:
     engine = build_engine(db_url)
     start_session = session_factory(engine)
     order = Order(
-        id=OrderId.new(),
-        total_amount=Money(Decimal("100"), Currency.RUB)
+        money=Money(Decimal("100"), Currency.RUB)
     )
     payment = Payment.create(
         order_id=order.id,
