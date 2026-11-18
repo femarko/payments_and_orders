@@ -1,13 +1,18 @@
-from dataclasses import (
-    dataclass,
-    field,
+from dataclasses import dataclass
+from typing import (
+    Optional,
+    Self,
+    Any,
 )
-from typing import Optional
 from datetime import (
     datetime,
     timezone
 )
-from decimal import Decimal
+from decimal import (
+    Decimal,
+    ROUND_HALF_UP,
+)
+from uuid import UUID
 
 from payments.domain.entities import BaseEntitiy
 from payments.domain.entities.payment import Payment
@@ -28,7 +33,6 @@ from payments.domain.value_objects import (
 
 
 
-@dataclass
 class Order(BaseEntitiy):
     """
     Aggregate root representing an order and its payment state.
@@ -44,15 +48,41 @@ class Order(BaseEntitiy):
     - only matching currency payments allowed
     - payment must belong to the order
     """
-    id: OrderId
-    total_amount: Money
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    updated_at: Optional[datetime] = None
 
-    def __post_init__(self):
-        self._paid_amount = Money(Decimal("0"), self.total_amount.currency)
+    __slots__ = (
+        "_id",
+        "_total_amount",
+        "_paid_amount",
+        "_created_at",
+        "_updated_at",
+    )
+
+    def __init__(self, money: Money) -> None:
+        self._id: OrderId = OrderId.new()
+        self._total_amount: Money = money
+        self._paid_amount = Money(Decimal("0"), self._total_amount.currency)
+        self._created_at: datetime = datetime.now(timezone.utc)
+        self._updated_at: Optional[datetime] = None
+
+    @property
+    def id(self) -> OrderId:
+        return self._id
+
+    @id.setter
+    def id(self, value: OrderId) -> None:
+        raise DomainAttributeError(
+            message="Order ID is immutable",
+        )
+
+    @property
+    def total_amount(self) -> Money:
+        return self._total_amount
+
+    @total_amount.setter
+    def total_amount(self, value: Money) -> None:
+        raise DomainAttributeError(
+            message="Order total amount is immutable",
+        )
 
     @property
     def paid_amount(self) -> Money:
@@ -60,7 +90,7 @@ class Order(BaseEntitiy):
         Total amount of accepted payments.
         """
         return self._paid_amount
-    
+
     @paid_amount.setter
     def paid_amount(self, value: Money) -> None:
         domain_methods = "`accept_payment`, `refund_payment`"
@@ -77,6 +107,26 @@ class Order(BaseEntitiy):
     def unpaid_amount(self, value: Money) -> None:
         domain_methods = "`accept_payment`, `refund_payment`"
         raise DomainAttributeError(domain_methods=domain_methods)
+
+    @property
+    def created_at(self) -> datetime:
+        return self._created_at
+
+    @created_at.setter
+    def created_at(self, value: datetime) -> None:
+        raise DomainAttributeError(
+            message="Order creation date is immutable",
+        )
+
+    @property
+    def updated_at(self) -> Optional[datetime]:
+        return self._updated_at
+
+    @updated_at.setter
+    def updated_at(self, value: datetime) -> None:
+        raise DomainAttributeError(
+            domain_methods="`accept_payment`, `refund_payment`"
+        )
 
     @property
     def status(self) -> OrderStatus:
@@ -177,10 +227,6 @@ class Order(BaseEntitiy):
             code=ErrorCode.FORBIDDEN_OPERATION
             message=f"Unacceptable payment status: `{payment.status}`"
             raise PaymentError(code, message)
-        if payment.is_refunded:
-            code=ErrorCode.FORBIDDEN_OPERATION
-            message="Payment has already been refunded"
-            raise PaymentError(code, message)
         if not payment.is_accepted:
             code=ErrorCode.FORBIDDEN_OPERATION
             message="Payment has not been accepted"
@@ -216,7 +262,7 @@ class Order(BaseEntitiy):
         self._validate_payment_for_acceptance(payment)
         self._validate_order_can_accept_payment(payment)
         self._paid_amount += payment.money
-        self.updated_at = datetime.now(timezone.utc)
+        self._updated_at = datetime.now(timezone.utc)
         payment._mark_as_accepted(self.updated_at)
 
     def refund_payment(self, payment: Payment) -> None:
@@ -236,5 +282,37 @@ class Order(BaseEntitiy):
         self._validate_payment_for_refund(payment)
         self._validate_order_can_refund_payment(payment)
         self._paid_amount -= payment.money
-        self.updated_at = datetime.now(timezone.utc)
+        self._updated_at = datetime.now(timezone.utc)
         payment._mark_as_refunded(self.updated_at)
+
+    @classmethod
+    def restore(
+        cls,
+        id: UUID,
+        total_amount: Money,
+        paid_amount: Money,
+        created_at: datetime,
+        updated_at: Optional[datetime],
+    ) -> Self:
+        """
+        Recreates an Order from persisted state.
+        Not intended for creating new Orders.
+        """
+        order = cls.__new__(cls)
+        order._id = id
+        order._total_amount = total_amount
+        order._paid_amount = paid_amount
+        order._created_at = created_at
+        order._updated_at = updated_at
+        return order
+
+    def params(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "total_amount": self.total_amount,
+            "paid_amount": self.paid_amount,
+            "unpaid_amount": self.unpaid_amount,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "status": self.status
+        }

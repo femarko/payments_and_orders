@@ -62,17 +62,6 @@ def test_set_is_accepted_flag_externally_raises_attribute_error(payment_params_f
     )
 
 
-def test_set_is_refunded_flag_externally_raises_attribute_error(payment_params_fixt):
-    payment = Payment.create(**payment_params_fixt)
-    with pytest.raises(DomainAttributeError) as e:
-        payment.is_refunded = True
-    assert e.value.code == ErrorCode.FORBIDDEN_OPERATION
-    assert e.value.message == (
-        f"Direct modification of this attribute is forbidden. "
-        f"Use domain methods instead. Domain methods: `mark_as_refunded`."
-    )
-
-
 def test_update_bank_status_changes_payment_status_and_updated_at_value(payment_params_fixt):
     payment = Payment.create(**payment_params_fixt)
     status_init = payment.status

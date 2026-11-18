@@ -27,6 +27,9 @@ class FakeBaseRepo:
     def delete(self, instance) -> None:
         self.temp_deleted.append(instance)
 
+    def update_model(self, entity: Any, model_id: Any) -> None:
+        pass
+
     def execute_adding(self) -> None:
         for item in self.temp_added:
             if not item.id:

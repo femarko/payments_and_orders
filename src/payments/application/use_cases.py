@@ -72,7 +72,7 @@ class DepositPayment(BaseUseCase[MessageResponse]):
             payment: Payment = self._fetch_from_db(uow.payments, payload.id)
             if payment.is_accepted:
                 return self.response(
-                    message=f"Already accepted at {payment.accepted_at}"
+                    message=f"Already accepted at {payment.updated_at}"
                 )
             if payment.type == PaymentType.ACQUIRING:
                 bank_result = self._check_bank_status(payment)
@@ -82,9 +82,9 @@ class DepositPayment(BaseUseCase[MessageResponse]):
             uow.payments.update_model(payment, payment.id)
             uow.orders.update_model(order, order.id)
             uow.commit()
-            acceptance_time = payment.accepted_at
+            updated_at = payment.updated_at
         return self.response(
-            message=f"Payment accepted at {acceptance_time}"
+            message=f"Payment accepted at {updated_at}"
         )
 
 
@@ -92,9 +92,9 @@ class RefundPayment(BaseUseCase[MessageResponse]):
     def execute(self, payment_id: PaymentId) -> MessageResponse:
         with self.uow() as uow:
             payment: Payment = self._fetch_from_db(uow.payments, payment_id)    
-            if payment.is_refunded:
+            if not payment.is_accepted:
                 return self.response(
-                    message=f"Already refunded at {payment.refunded_at}"
+                    message=f"Payment is not accepted and cannot be refunded."
                 )
             if payment.type == PaymentType.ACQUIRING:
                 bank_result = self._check_bank_status(payment)
